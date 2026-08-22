@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waypoint — Sign in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --harbor:#0F2A3C;
+    --harbor-deep:#0A1E2C;
+    --cream:#F6EFE3;
+    --coral:#E8734A;
+    --coral-dark:#C85A34;
+    --pine:#1F5C55;
+    --slate:#5B7080;
+    --brass:#C9A877;
+    --line:rgba(201,168,119,0.35);
+    --error:#C0392B;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Manrope', sans-serif;
+    background:var(--harbor-deep);
+    color:var(--harbor);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    overflow-x:hidden;
+  }
+
+  .stage{
+    width:100%;
+    max-width:980px;
+    min-height:600px;
+    display:grid;
+    grid-template-columns:1.05fr 1fr;
+    background:var(--cream);
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 40px 90px rgba(0,0,0,0.55), 0 2px 0 rgba(255,255,255,0.04) inset;
+  }
+
+  /* ---------- LEFT: map panel ---------- */
+  .map-panel{
+    position:relative;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(232,115,74,0.18), transparent 45%),
+      linear-gradient(155deg, var(--harbor) 0%, var(--harbor-deep) 100%);
+    color:var(--cream);
+    padding:44px 40px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    overflow:hidden;
+  }
+  .map-panel::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image:
+      linear-gradient(rgba(246,239,227,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(246,239,227,0.045) 1px, transparent 1px);
+    background-size:28px 28px;
+    pointer-events:none;
+  }
+
+  .brand{
+    position:relative;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:'Space Mono', monospace;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    font-size:12.5px;
+    color:var(--brass);
+  }
+  .brand .dot{width:6px;height:6px;border-radius:50%;background:var(--coral);}
+
+  .route-wrap{position:relative; z-index:2; flex:1; display:flex; align-items:center; justify-content:center; margin:20px 0;}
+  .route-svg{width:100%; height:auto; max-width:380px;}
+  .route-path{
+    fill:none;
+    stroke:var(--brass);
+    stroke-width:1.5;
+    stroke-dasharray:6 6;
+    stroke-linecap:round;
+    stroke-dashoffset:600;
+    animation:draw 2.6s ease-out forwards 0.3s;
+  }
+  @keyframes draw{ to{ stroke-dashoffset:0; } }
+  .pin{ fill:var(--cream); }
+  .pin-origin{ fill:var(--coral); }
+  .plane{
+    transform-origin:center;
+    animation:fly 2.6s ease-out forwards 0.3s;
+    opacity:0;
+  }
+  @keyframes fly{
+    0%{ opacity:0; }
+    5%{ opacity:1; }
+    100%{ opacity:1; offset-distance:100%; }
+  }
+  .plane-mover{
+    offset-path:path('M40,210 C120,80 210,300 330,60');
+    animation:flyalong 2.6s ease-out forwards 0.3s;
+    opacity:0;
+  }
+  @keyframes flyalong{
+    0%{ opacity:0; offset-distance:0%; }
+    4%{ opacity:1; }
+    100%{ opacity:1; offset-distance:100%; }
+  }
+  .city-label{
+    font-family:'Space Mono', monospace;
+    font-size:10px;
+    fill:var(--slate);
+    letter-spacing:0.05em;
+  }
+
+  .map-copy{ position:relative; z-index:2; }
+  .map-copy h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:clamp(28px, 3.4vw, 36px);
+    line-height:1.1;
+    letter-spacing:-0.015em;
+    max-width:340px;
+  }
+  .map-copy p{
+    margin-top:14px;
+    color:var(--slate);
+    font-size:14px;
+    line-height:1.6;
+    max-width:320px;
+  }
+  .coords{
+    margin-top:24px;
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    color:var(--brass);
+    letter-spacing:0.04em;
+    display:flex;
+    gap:18px;
+  }
+
+  /* ---------- RIGHT: form panel ---------- */
+  .form-panel{
+    position:relative;
+    padding:44px 44px 36px;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .tabs{
+    display:flex;
+    background:rgba(15,42,60,0.06);
+    border-radius:999px;
+    padding:4px;
+    margin-bottom:30px;
+    position:relative;
+  }
+  .tab-btn{
+    flex:1;
+    border:none;
+    background:transparent;
+    padding:10px 0;
+    font-family:'Manrope', sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    letter-spacing:0.01em;
+    color:var(--slate);
+    cursor:pointer;
+    border-radius:999px;
+    position:relative;
+    z-index:1;
+    transition:color 0.25s ease;
+  }
+  .tab-btn.active{ color:var(--cream); }
+  .tab-highlight{
+    position:absolute;
+    top:4px; bottom:4px; left:4px;
+    width:calc(50% - 4px);
+    background:var(--harbor);
+    border-radius:999px;
+    transition:transform 0.32s cubic-bezier(.6,.1,.2,1);
+    z-index:0;
+  }
+  .tabs[data-active="signup"] .tab-highlight{ transform:translateX(100%); }
+
+  .form-header{ margin-bottom:26px; }
+  .form-header .kicker{
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--coral);
+  }
+  .form-header h2{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:26px;
+    letter-spacing:-0.01em;
+    margin-top:6px;
+  }
+  .form-header p{
+    font-size:13.5px;
+    color:var(--slate);
+    margin-top:6px;
+  }
+
+  form{ display:flex; flex-direction:column; gap:16px; }
+  .field select,
+  .field textarea{
+    border:1.5px solid rgba(15,42,60,0.16);
+    background:#fff;
+    border-radius:9px;
+    padding:12px 14px;
+    font-size:14.5px;
+    font-family:'Manrope', sans-serif;
+    color:var(--harbor);
+    outline:none;
+    transition:border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .field select:focus,
+  .field textarea:focus{
+    border-color:var(--pine);
+    box-shadow:0 0 0 3px rgba(31,92,85,0.12);
+  }
+  .field select.invalid,
+  .field textarea.invalid{
+    border-color:var(--error);
+    box-shadow:0 0 0 3px rgba(192,57,43,0.1);
+  }
+  .field select{
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235B7080' stroke-width='1.6' fill='none' fill-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 14px center;
+    padding-right:34px;
+    cursor:pointer;
+  }
+  .field select option[value=""]{ color:#a9b3ba; }
+  .field textarea{
+    resize:vertical;
+    min-height:70px;
+    font-family:'Manrope', sans-serif;
+    line-height:1.5;
+  }
+  .field textarea::placeholder{ color:#a9b3ba; }
+
+  .field-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+
+  .mobile-input-wrap{
+    display:flex;
+    align-items:stretch;
+  }
+  .mobile-prefix{
+    display:flex;
+    align-items:center;
+    padding:0 12px;
+    border:1.5px solid rgba(15,42,60,0.16);
+    border-right:none;
+    border-radius:9px 0 0 9px;
+    background:rgba(15,42,60,0.04);
+    color:var(--slate);
+    font-weight:600;
+    font-size:14.5px;
+  }
+  .mobile-input-wrap input{
+    border-radius:0 9px 9px 0;
+    flex:1;
+    min-width:0;
+  }
+  .mobile-input-wrap:focus-within .mobile-prefix{
+    border-color:var(--pine);
+  }
+
+  .char-count{
+    font-size:11px;
+    color:var(--slate);
+    font-family:'Space Mono', monospace;
+    white-space:nowrap;
+  }
+  .char-count.limit{ color:var(--error); }
+
+  @media (max-width:520px){
+    .field-row{ grid-template-columns:1fr; }
+  }
+
+  .field-label-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .generate-link{
+    background:none;
+    border:none;
+    color:var(--pine);
+    font-family:'Manrope', sans-serif;
+    font-weight:600;
+    font-size:11.5px;
+    cursor:pointer;
+    padding:0;
+  }
+  .generate-link:hover{ text-decoration:underline; }
+
+  .pw-input-wrap{ position:relative; display:flex; }
+  .pw-input-wrap input{ flex:1; padding-right:56px; }
+  .pw-toggle{
+    position:absolute;
+    right:6px;
+    top:50%;
+    transform:translateY(-50%);
+    background:none;
+    border:none;
+    color:var(--slate);
+    font-family:'Manrope', sans-serif;
+    font-weight:600;
+    font-size:11.5px;
+    cursor:pointer;
+    padding:6px 8px;
+  }
+  .pw-toggle:hover{ color:var(--harbor); }
+
+  .pw-strength{
+    display:flex;
+    gap:5px;
+    margin-top:2px;
+  }
+  .pw-strength-bar{
+    flex:1;
+    height:4px;
+    border-radius:3px;
+    background:rgba(15,42,60,0.1);
+    transition:background 0.2s ease;
+  }
+  .pw-strength[data-level="1"] .pw-strength-bar:nth-child(1){ background:var(--error); }
+  .pw-strength[data-level="2"] .pw-strength-bar:nth-child(1),
+  .pw-strength[data-level="2"] .pw-strength-bar:nth-child(2){ background:#D98B3F; }
+  .pw-strength[data-level="3"] .pw-strength-bar:nth-child(1),
+  .pw-strength[data-level="3"] .pw-strength-bar:nth-child(2),
+  .pw-strength[data-level="3"] .pw-strength-bar:nth-child(3){ background:var(--brass); }
+  .pw-strength[data-level="4"] .pw-strength-bar{ background:var(--pine); }
+
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.03em;
+    color:var(--harbor);
+  }
+  .field input{
+    border:1.5px solid rgba(15,42,60,0.16);
+    background:#fff;
+    border-radius:9px;
+    padding:12px 14px;
+    font-size:14.5px;
+    font-family:'Manrope', sans-serif;
+    color:var(--harbor);
+    outline:none;
+    transition:border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .field input::placeholder{ color:#a9b3ba; }
+  .field input:focus{
+    border-color:var(--pine);
+    box-shadow:0 0 0 3px rgba(31,92,85,0.12);
+  }
+  .field input.invalid{
+    border-color:var(--error);
+    box-shadow:0 0 0 3px rgba(192,57,43,0.1);
+  }
+  .field-error{
+    font-size:12px;
+    color:var(--error);
+    min-height:14px;
+    display:none;
+  }
+  .field-error.show{ display:block; }
+
+  .row-between{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:-4px;
+  }
+  .remember{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:12.5px;
+    color:var(--slate);
+  }
+  .remember input{ accent-color:var(--pine); width:14px; height:14px; }
+  .forgot-link{
+    font-size:12.5px;
+    color:var(--pine);
+    text-decoration:none;
+    font-weight:600;
+    border:none;
+    background:none;
+    cursor:pointer;
+    padding:0;
+  }
+  .forgot-link:hover{ text-decoration:underline; }
+
+  .submit-btn{
+    margin-top:8px;
+    background:var(--coral);
+    color:#fff;
+    border:none;
+    padding:13px 0;
+    border-radius:9px;
+    font-family:'Manrope', sans-serif;
+    font-weight:700;
+    font-size:14.5px;
+    letter-spacing:0.01em;
+    cursor:pointer;
+    transition:background 0.2s ease, transform 0.15s ease;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+  .submit-btn:hover{ background:var(--coral-dark); }
+  .submit-btn:active{ transform:scale(0.985); }
+  .submit-btn:focus-visible, .tab-btn:focus-visible, .forgot-link:focus-visible, input:focus-visible{
+    outline:2px solid var(--pine);
+    outline-offset:2px;
+  }
+
+  .divider{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin:22px 0 6px;
+    color:var(--slate);
+    font-size:11.5px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+  }
+  .divider::before, .divider::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:var(--line);
+  }
+
+  .social-row{
+    display:flex;
+    gap:10px;
+    margin-top:16px;
+  }
+  .social-btn{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:11px 0;
+    border-radius:9px;
+    border:1.5px solid rgba(15,42,60,0.14);
+    background:#fff;
+    font-family:'Manrope', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    color:var(--harbor);
+    cursor:pointer;
+    transition:border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+  }
+  .social-btn:hover{
+    border-color:rgba(15,42,60,0.3);
+    background:rgba(15,42,60,0.03);
+  }
+  .social-btn:active{ transform:scale(0.985); }
+  .social-btn svg{ flex-shrink:0; }
+
+  .switch-line{
+    text-align:center;
+    font-size:13px;
+    color:var(--slate);
+    margin-top:auto;
+    padding-top:18px;
+  }
+  .switch-line button{
+    background:none;
+    border:none;
+    color:var(--pine);
+    font-weight:600;
+    cursor:pointer;
+    padding:0;
+    font-size:13px;
+  }
+  .switch-line button:hover{ text-decoration:underline; }
+
+  .status-banner{
+    display:none;
+    margin-top:16px;
+    padding:11px 14px;
+    border-radius:9px;
+    font-size:13px;
+    line-height:1.5;
+  }
+  .status-banner.show{ display:block; }
+  .status-banner.success{ background:rgba(31,92,85,0.1); color:var(--pine); }
+  .status-banner.error{ background:rgba(192,57,43,0.08); color:var(--error); }
+
+  /* forgot password inline panel */
+  .forgot-panel{
+    display:none;
+    flex-direction:column;
+    gap:16px;
+  }
+  .forgot-panel.show{ display:flex; }
+  .back-link{
+    align-self:flex-start;
+    background:none;
+    border:none;
+    color:var(--slate);
+    font-size:12.5px;
+    cursor:pointer;
+    padding:0;
+    display:flex;
+    align-items:center;
+    gap:5px;
+  }
+  .back-link:hover{ color:var(--harbor); }
+
+  .perf{
+    position:absolute;
+    left:0; right:0; top:0;
+    height:0;
+  }
+
+  @media (max-width:760px){
+    .stage{ grid-template-columns:1fr; }
+    .map-panel{ display:none; }
+    .form-panel{ padding:34px 26px 28px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .route-path, .plane-mover{ animation:none; stroke-dashoffset:0; opacity:1; offset-distance:100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- LEFT PANEL -->
+  <div class="map-panel">
+    <div class="brand"><span class="dot"></span>WAYPOINT</div>
+
+    <div class="route-wrap">
+      <svg class="route-svg" viewBox="0 0 380 340" xmlns="http://www.w3.org/2000/svg">
+        <path class="route-path" d="M40,210 C120,80 210,300 330,60" />
+        <circle class="pin pin-origin" cx="40" cy="210" r="5"/>
+        <circle class="pin" cx="145" cy="130" r="3"/>
+        <circle class="pin" cx="220" cy="245" r="3"/>
+        <circle class="pin" cx="330" cy="60" r="5"/>
+        <text class="city-label" x="16" y="232">SUR</text>
+        <text class="city-label" x="130" y="118">BOM</text>
+        <text class="city-label" x="196" y="266">GOI</text>
+        <text class="city-label" x="308" y="46">KTM</text>
+        <g class="plane-mover" transform="translate(-8,-8)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M2 16l7-2 5 6 2-1-3-7 7-4-1-3-8 2-6-5-2 1 4 6-7 4z" fill="#E8734A"/>
+          </svg>
+        </g>
+      </svg>
+    </div>
+
+    <div class="map-copy">
+      <h1>Every trip starts as a line on someone's map.</h1>
+      <p>Plan routes, save stays, and keep every itinerary in one place — draw the next one.</p>
+      <div class="coords">
+        <span>21.17°N</span>
+        <span>72.83°E</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="form-panel">
+
+    <!-- Tabs -->
+    <div class="tabs" id="tabs" data-active="login">
+      <div class="tab-highlight"></div>
+      <button type="button" class="tab-btn active" id="tabLogin">Log in</button>
+      <button type="button" class="tab-btn" id="tabSignup">Sign up</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginView">
+      <div class="form-header">
+        <h2>Continue your journey</h2>
+        <p>Log in to pick up where your last trip left off.</p>
+      </div>
+
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email" required aria-describedby="loginEmailError">
+          <span class="field-error" id="loginEmailError">Enter a valid email address.</span>
+        </div>
+
+        <div class="field">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="current-password" required aria-describedby="loginPasswordError">
+          <span class="field-error" id="loginPasswordError">Use 8+ characters with an uppercase letter, a number, and a symbol.</span>
+        </div>
+
+        <div class="row-between">
+          <label class="remember">
+            <input type="checkbox" id="rememberMe">
+            Remember me
+          </label>
+          <button type="button" class="forgot-link" id="forgotTrigger">Forgot password?</button>
+        </div>
+
+        <button type="submit" class="submit-btn">Log in</button>
+
+        <div class="status-banner" id="loginStatus"></div>
+      </form>
+
+      <div class="divider">or continue with</div>
+      <div class="social-row">
+        <button type="button" class="social-btn" id="googleLogin">
+          <svg width="16" height="16" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z" fill="#4285F4"/>
+            <path d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.81.54-1.85.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z" fill="#34A853"/>
+            <path d="M3.95 10.7A5.4 5.4 0 0 1 3.66 9c0-.59.1-1.17.29-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03l2.99-2.33z" fill="#FBBC05"/>
+            <path d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z" fill="#EA4335"/>
+          </svg>
+          Google
+        </button>
+        <button type="button" class="social-btn" id="facebookLogin">
+          <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.51 1.49-3.9 3.77-3.9 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.89h2.78l-.44 2.91h-2.34V22c4.78-.76 8.44-4.92 8.44-9.94z" fill="#1877F2"/>
+          </svg>
+          Facebook
+        </button>
+      </div>
+
+      <div class="switch-line">
+        New to the website? <button type="button" id="goSignup">Create an account</button>
+      </div>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="signupView" style="display:none;">
+      <div class="form-header">
+        <div class="kicker">First time here</div>
+        <h2>Start plotting your route</h2>
+        <p>Create an account to save trips and build itineraries.</p>
+      </div>
+
+      <form id="signupForm" novalidate>
+        <div class="field">
+          <label for="signupName">Full name</label>
+          <input type="text" id="signupName" placeholder="Your name" autocomplete="name" required aria-describedby="signupNameError">
+          <span class="field-error" id="signupNameError">Enter your name.</span>
+        </div>
+
+        <div class="field">
+          <label for="signupEmail">Email</label>
+          <input type="email" id="signupEmail" placeholder="you@gmail.com" autocomplete="email" required aria-describedby="signupEmailError">
+          <span class="field-error" id="signupEmailError">Use a Gmail, Outlook, Yahoo, or Hotmail address.</span>
+        </div>
+
+        <div class="field">
+          <div class="field-label-row">
+            <label for="signupPassword">Password</label>
+            <button type="button" class="generate-link" id="generatePassword">Generate strong password</button>
+          </div>
+          <div class="pw-input-wrap">
+            <input type="password" id="signupPassword" placeholder="At least 8 characters" autocomplete="new-password" required aria-describedby="signupPasswordError">
+            <button type="button" class="pw-toggle" id="togglePassword" aria-label="Show password">Show</button>
+          </div>
+          <div class="pw-strength" id="pwStrength" aria-hidden="true">
+            <span class="pw-strength-bar"></span>
+            <span class="pw-strength-bar"></span>
+            <span class="pw-strength-bar"></span>
+            <span class="pw-strength-bar"></span>
+          </div>
+          <span class="field-error" id="signupPasswordError">Use 8+ characters with an uppercase letter, a number, and a symbol.</span>
+        </div>
+
+        <div class="field">
+          <label for="signupConfirm">Confirm password</label>
+          <input type="password" id="signupConfirm" placeholder="Re-enter your password" autocomplete="new-password" required aria-describedby="signupConfirmError">
+          <span class="field-error" id="signupConfirmError">Passwords don't match.</span>
+        </div>
+
+        <div class="field">
+          <label for="signupMobile">Mobile number</label>
+          <div class="mobile-input-wrap">
+            <span class="mobile-prefix">+</span>
+            <input type="tel" id="signupMobile" placeholder="91 98765 43210" autocomplete="tel" inputmode="numeric" required aria-describedby="signupMobileError">
+          </div>
+          <span class="field-error" id="signupMobileError">Enter your number with country code, digits only.</span>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="signupCity">City</label>
+            <input type="text" id="signupCity" placeholder="Surat" autocomplete="address-level2" required aria-describedby="signupCityError">
+            <span class="field-error" id="signupCityError">Enter your city.</span>
+          </div>
+
+          <div class="field">
+            <label for="signupCountry">Country</label>
+            <select id="signupCountry" autocomplete="country-name" required aria-describedby="signupCountryError">
+              <option value="" disabled selected>Select country</option>
+              <option value="IN">India</option>
+              <option value="US">United States</option>
+              <option value="GB">United Kingdom</option>
+              <option value="CA">Canada</option>
+              <option value="AU">Australia</option>
+              <option value="AE">United Arab Emirates</option>
+              <option value="SG">Singapore</option>
+              <option value="DE">Germany</option>
+              <option value="FR">France</option>
+              <option value="JP">Japan</option>
+              <option value="NP">Nepal</option>
+              <option value="Other">Other</option>
+            </select>
+            <span class="field-error" id="signupCountryError">Select your country.</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label-row">
+            <label for="signupBio">Tell us about your travel experience</label>
+            <span class="char-count" id="bioCharCount">0 / 300</span>
+          </div>
+          <textarea id="signupBio" rows="3" maxlength="300" placeholder="Backpacker, weekend explorer, first-time flyer — tell us what kind of traveler you are (optional)" aria-describedby="signupBioError"></textarea>
+          <span class="field-error" id="signupBioError">Write at least 10 characters, or leave this blank.</span>
+        </div>
+
+        <button type="submit" class="submit-btn">Create account</button>
+
+        <div class="status-banner" id="signupStatus"></div>
+      </form>
+
+      <div class="switch-line">
+        Already have an account? <button type="button" id="goLogin">Log in</button>
+      </div>
+    </div>
+
+    <!-- FORGOT PASSWORD -->
+    <div class="forgot-panel" id="forgotView">
+      <button type="button" class="back-link" id="backToLogin">&larr; Back to log in</button>
+      <div class="form-header" style="margin-bottom:6px;">
+        <div class="kicker">Reset access</div>
+        <h2>Forgot your password?</h2>
+        <p>Enter your account email and we'll send a reset link.</p>
+      </div>
+      <form id="forgotForm" novalidate>
+        <div class="field">
+          <label for="forgotEmail">Email</label>
+          <input type="email" id="forgotEmail" placeholder="you@example.com" autocomplete="email" required aria-describedby="forgotEmailError">
+          <span class="field-error" id="forgotEmailError">Enter a valid email address.</span>
+        </div>
+        <button type="submit" class="submit-btn">Send reset link</button>
+        <div class="status-banner" id="forgotStatus"></div>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const tabs = document.getElementById('tabs');
+  const tabLogin = document.getElementById('tabLogin');
+  const tabSignup = document.getElementById('tabSignup');
+  const loginView = document.getElementById('loginView');
+  const signupView = document.getElementById('signupView');
+  const forgotView = document.getElementById('forgotView');
+
+  function showLogin(){
+    tabs.style.display = 'flex';
+    tabs.dataset.active = 'login';
+    tabLogin.classList.add('active');
+    tabSignup.classList.remove('active');
+    loginView.style.display = 'block';
+    signupView.style.display = 'none';
+    forgotView.classList.remove('show');
+  }
+  function showSignup(){
+    tabs.style.display = 'flex';
+    tabs.dataset.active = 'signup';
+    tabSignup.classList.add('active');
+    tabLogin.classList.remove('active');
+    signupView.style.display = 'block';
+    loginView.style.display = 'none';
+    forgotView.classList.remove('show');
+  }
+  function showForgot(){
+    tabs.style.display = 'none';
+    loginView.style.display = 'none';
+    signupView.style.display = 'none';
+    forgotView.classList.add('show');
+  }
+
+  tabLogin.addEventListener('click', showLogin);
+  tabSignup.addEventListener('click', showSignup);
+  document.getElementById('goSignup').addEventListener('click', showSignup);
+  document.getElementById('goLogin').addEventListener('click', showLogin);
+  document.getElementById('forgotTrigger').addEventListener('click', showForgot);
+  document.getElementById('backToLogin').addEventListener('click', showLogin);
+
+  // ---- validation helpers ----
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  // Registration only accepts a shortlist of common providers
+  const allowedSignupDomains = ['gmail.com', 'hotmail.com', 'yahoo.com', 'outlook.com', 'live.com'];
+  function isAllowedSignupEmail(value){
+    if(!emailRe.test(value)) return false;
+    const domain = value.trim().toLowerCase().split('@')[1] || '';
+    return allowedSignupDomains.includes(domain);
+  }
+
+  // Signup password: 8+ chars, at least one uppercase, one number, one symbol
+  const strongPasswordRe = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
+  // Returns 'empty' | 'invalid' | 'valid' for a plain email field
+  function checkEmail(value){
+    const v = value.trim();
+    if(v.length === 0) return 'empty';
+    return emailRe.test(v) ? 'valid' : 'invalid';
+  }
+
+  // Returns 'empty' | 'invalid' | 'valid' for a signup email restricted to allowed domains
+  function checkSignupEmail(value){
+    const v = value.trim();
+    if(v.length === 0) return 'empty';
+    return isAllowedSignupEmail(v) ? 'valid' : 'invalid';
+  }
+
+  // Returns 'empty' | 'invalid' | 'valid' for a password — required + strength rule.
+  // Used by both the login and signup forms so the same strong-password bar applies everywhere.
+  function checkStrongPassword(value){
+    if(value.length === 0) return 'empty';
+    return strongPasswordRe.test(value) ? 'valid' : 'invalid';
+  }
+  const checkLoginPassword = checkStrongPassword;
+
+  // Signup password: same strength rule as login, plus it can't be the same
+  // text as the email typed in the field above it.
+  function checkSignupPassword(passwordValue, emailValue){
+    if(passwordValue.length === 0) return 'empty';
+    const email = (emailValue || '').trim().toLowerCase();
+    if(email.length > 0 && passwordValue.trim().toLowerCase() === email){
+      return 'matchesEmail';
+    }
+    return strongPasswordRe.test(passwordValue) ? 'valid' : 'invalid';
+  }
+
+  function applyFieldResult(input, errorEl, result, messages){
+    const valid = result === 'valid';
+    input.classList.toggle('invalid', !valid);
+    input.setAttribute('aria-invalid', String(!valid));
+    if(valid){
+      errorEl.classList.remove('show');
+    } else {
+      errorEl.textContent = messages[result] || messages.invalid;
+      errorEl.classList.add('show');
+    }
+    return valid;
+  }
+
+  function clearFieldState(input, errorEl){
+    input.classList.remove('invalid');
+    input.removeAttribute('aria-invalid');
+    errorEl.classList.remove('show');
+  }
+
+  function showBanner(el, message, type){
+    el.textContent = message;
+    el.className = 'status-banner show ' + type;
+  }
+
+  // ---- LOGIN ----
+  const loginForm = document.getElementById('loginForm');
+  const loginEmailInput = document.getElementById('loginEmail');
+  const loginPassInput = document.getElementById('loginPassword');
+  const loginEmailError = document.getElementById('loginEmailError');
+  const loginPassError = document.getElementById('loginPasswordError');
+  const loginStatus = document.getElementById('loginStatus');
+
+  const loginEmailMsgs = { empty: 'Email is required.', invalid: 'Enter a valid email address.' };
+  const loginPassMsgs = { empty: 'Password is required.', invalid: 'Use 8+ characters with an uppercase letter, a number, and a symbol.' };
+
+  // Validate as the user leaves each field, not just on submit
+  loginEmailInput.addEventListener('blur', () => {
+    applyFieldResult(loginEmailInput, loginEmailError, checkEmail(loginEmailInput.value), loginEmailMsgs);
+  });
+  loginPassInput.addEventListener('blur', () => {
+    applyFieldResult(loginPassInput, loginPassError, checkLoginPassword(loginPassInput.value), loginPassMsgs);
+  });
+
+  loginForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    loginStatus.classList.remove('show');
+
+    // Validate email first — stop here if it's invalid so the user
+    // isn't shown a password error before their email even checks out.
+    const emailResult = checkEmail(loginEmailInput.value);
+    const emailValid = applyFieldResult(loginEmailInput, loginEmailError, emailResult, loginEmailMsgs);
+    clearFieldState(loginPassInput, loginPassError);
+
+    if(!emailValid){
+      showBanner(loginStatus, emailResult === 'empty' ? 'Enter your email address.' : 'Enter a valid email address first.', 'error');
+      loginEmailInput.focus();
+      return;
+    }
+
+    // Email passed — now check the password.
+    const passResult = checkLoginPassword(loginPassInput.value);
+    const passValid = applyFieldResult(loginPassInput, loginPassError, passResult, loginPassMsgs);
+
+    if(!passValid){
+      showBanner(loginStatus, passResult === 'empty' ? 'Enter your password.' : 'Use 8+ characters with an uppercase letter, a number, and a symbol.', 'error');
+      loginPassInput.focus();
+      return;
+    }
+
+    showBanner(loginStatus, 'Looks good — you would be logged in now.', 'success');
+  });
+
+  // ---- SOCIAL LOGIN (returning users) ----
+  document.getElementById('googleLogin').addEventListener('click', function(){
+    showBanner(loginStatus, 'Redirecting to Google to sign in…', 'success');
+  });
+  document.getElementById('facebookLogin').addEventListener('click', function(){
+    showBanner(loginStatus, 'Redirecting to Facebook to sign in…', 'success');
+  });
+
+  // ---- SIGNUP ----
+  const signupForm = document.getElementById('signupForm');
+  const signupNameInput = document.getElementById('signupName');
+  const signupEmailInput = document.getElementById('signupEmail');
+  const signupPassInput = document.getElementById('signupPassword');
+  const signupConfirmInput = document.getElementById('signupConfirm');
+  const signupMobileInput = document.getElementById('signupMobile');
+  const signupCityInput = document.getElementById('signupCity');
+  const signupCountryInput = document.getElementById('signupCountry');
+  const signupBioInput = document.getElementById('signupBio');
+
+  const signupNameError = document.getElementById('signupNameError');
+  const signupEmailError = document.getElementById('signupEmailError');
+  const signupPassError = document.getElementById('signupPasswordError');
+  const signupConfirmError = document.getElementById('signupConfirmError');
+  const signupMobileError = document.getElementById('signupMobileError');
+  const signupCityError = document.getElementById('signupCityError');
+  const signupCountryError = document.getElementById('signupCountryError');
+  const signupBioError = document.getElementById('signupBioError');
+  const signupStatus = document.getElementById('signupStatus');
+
+  const signupNameMsgs = { empty: 'Your name is required.', invalid: 'Enter your full name.' };
+  const signupEmailMsgs = { empty: 'Email is required.', invalid: 'Use a Gmail, Outlook, Yahoo, or Hotmail address.' };
+  const signupPassMsgs = {
+    empty: 'Password is required.',
+    invalid: 'Use 8+ characters with an uppercase letter, a number, and a symbol.',
+    matchesEmail: "Your password can't be the same as your email above — choose a different one."
+  };
+  const signupConfirmMsgs = { empty: 'Please confirm your password.', invalid: "Passwords don't match." };
+  const signupMobileMsgs = { empty: 'Mobile number is required.', invalid: 'Enter a valid number with country code (7–15 digits, digits only).' };
+  const signupCityMsgs = { empty: 'City is required.', invalid: 'Enter a valid city name (letters only).' };
+  const signupCountryMsgs = { empty: 'Select your country.', invalid: 'Select your country.' };
+  const signupBioMsgs = { invalid: 'Write at least 10 characters, or leave this blank.' };
+
+  function checkName(value){
+    const v = value.trim();
+    if(v.length === 0) return 'empty';
+    return v.length >= 2 ? 'valid' : 'invalid';
+  }
+  function checkConfirm(confirmValue, passValue){
+    if(confirmValue.length === 0) return 'empty';
+    return confirmValue === passValue ? 'valid' : 'invalid';
+  }
+
+  // Mobile: required, digits only (spaces/dashes allowed for readability),
+  // 7–15 digits after stripping formatting — covers most international numbers.
+  const mobileDigitsRe = /^[0-9]{7,15}$/;
+  function checkMobile(value){
+    const v = value.trim();
+    if(v.length === 0) return 'empty';
+    const digitsOnly = v.replace(/[\s-]/g, '');
+    return mobileDigitsRe.test(digitsOnly) ? 'valid' : 'invalid';
+  }
+
+  // City: required, letters/spaces/hyphens/apostrophes only, 2+ characters
+  const cityRe = /^[A-Za-z\s'-]{2,50}$/;
+  function checkCity(value){
+    const v = value.trim();
+    if(v.length === 0) return 'empty';
+    return cityRe.test(v) ? 'valid' : 'invalid';
+  }
+
+  // Country: required select — the placeholder option has an empty value
+  function checkCountry(value){
+    return value ? 'valid' : 'empty';
+  }
+
+  // Bio: optional. If left blank it's valid; if filled in, require 10+ characters
+  // (the maxlength="300" attribute on the textarea already caps the upper bound).
+  function checkBio(value){
+    const v = value.trim();
+    if(v.length === 0) return 'valid';
+    return v.length >= 10 ? 'valid' : 'invalid';
+  }
+
+  signupNameInput.addEventListener('blur', () => {
+    applyFieldResult(signupNameInput, signupNameError, checkName(signupNameInput.value), signupNameMsgs);
+  });
+  signupEmailInput.addEventListener('blur', () => {
+    applyFieldResult(signupEmailInput, signupEmailError, checkSignupEmail(signupEmailInput.value), signupEmailMsgs);
+    if(signupPassInput.value.length > 0){
+      applyFieldResult(signupPassInput, signupPassError, checkSignupPassword(signupPassInput.value, signupEmailInput.value), signupPassMsgs);
+    }
+  });
+  signupPassInput.addEventListener('blur', () => {
+    applyFieldResult(signupPassInput, signupPassError, checkSignupPassword(signupPassInput.value, signupEmailInput.value), signupPassMsgs);
+  });
+  signupConfirmInput.addEventListener('blur', () => {
+    const r = checkConfirm(signupConfirmInput.value, signupPassInput.value);
+    applyFieldResult(signupConfirmInput, signupConfirmError, r, signupConfirmMsgs);
+  });
+  signupMobileInput.addEventListener('blur', () => {
+    applyFieldResult(signupMobileInput, signupMobileError, checkMobile(signupMobileInput.value), signupMobileMsgs);
+  });
+  signupCityInput.addEventListener('blur', () => {
+    applyFieldResult(signupCityInput, signupCityError, checkCity(signupCityInput.value), signupCityMsgs);
+  });
+  signupCountryInput.addEventListener('change', () => {
+    applyFieldResult(signupCountryInput, signupCountryError, checkCountry(signupCountryInput.value), signupCountryMsgs);
+  });
+
+  // Only allow digits, spaces, and dashes to be typed into the mobile field
+  signupMobileInput.addEventListener('input', () => {
+    signupMobileInput.value = signupMobileInput.value.replace(/[^\d\s-]/g, '');
+  });
+
+  // Live character counter for the optional travel-experience bio
+  const bioCharCountEl = document.getElementById('bioCharCount');
+  signupBioInput.addEventListener('input', () => {
+    const len = signupBioInput.value.length;
+    bioCharCountEl.textContent = len + ' / 300';
+    bioCharCountEl.classList.toggle('limit', len >= 300);
+  });
+  signupBioInput.addEventListener('blur', () => {
+    applyFieldResult(signupBioInput, signupBioError, checkBio(signupBioInput.value), signupBioMsgs);
+  });
+
+  // ---- Password strength meter (updates live as the user types) ----
+  const pwStrengthEl = document.getElementById('pwStrength');
+  function passwordStrengthLevel(value){
+    if(value.length === 0) return 0;
+    let score = 0;
+    if(value.length >= 8) score++;
+    if(value.length >= 12) score++;
+    if(/[A-Z]/.test(value) && /[a-z]/.test(value)) score++;
+    if(/\d/.test(value)) score++;
+    if(/[^A-Za-z0-9]/.test(value)) score++;
+    return Math.min(4, Math.max(value.length > 0 ? 1 : 0, score));
+  }
+  signupPassInput.addEventListener('input', () => {
+    pwStrengthEl.setAttribute('data-level', String(passwordStrengthLevel(signupPassInput.value)));
+  });
+
+  // ---- Show / hide password ----
+  const togglePasswordBtn = document.getElementById('togglePassword');
+  togglePasswordBtn.addEventListener('click', () => {
+    const showing = signupPassInput.type === 'text';
+    signupPassInput.type = showing ? 'password' : 'text';
+    togglePasswordBtn.textContent = showing ? 'Show' : 'Hide';
+    togglePasswordBtn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+  });
+
+  // ---- Generate a strong password ----
+  function generateStrongPassword(length = 14){
+    const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const lower = 'abcdefghijkmnpqrstuvwxyz';
+    const digits = '23456789';
+    const symbols = '!@#$%^&*-_=+?';
+    const all = upper + lower + digits + symbols;
+
+    // Guarantee at least one of each required character class
+    const required = [
+      upper[Math.floor(Math.random() * upper.length)],
+      lower[Math.floor(Math.random() * lower.length)],
+      digits[Math.floor(Math.random() * digits.length)],
+      symbols[Math.floor(Math.random() * symbols.length)],
+    ];
+    const remainingLength = Math.max(length - required.length, 0);
+    const rest = Array.from({ length: remainingLength }, () => all[Math.floor(Math.random() * all.length)]);
+
+    // Shuffle so the required characters aren't always in the same spot
+    const chars = required.concat(rest);
+    for(let i = chars.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [chars[i], chars[j]] = [chars[j], chars[i]];
+    }
+    return chars.join('');
+  }
+
+  document.getElementById('generatePassword').addEventListener('click', () => {
+    const generated = generateStrongPassword();
+    signupPassInput.value = generated;
+    signupConfirmInput.value = generated;
+
+    // Reveal it briefly so the user can see and copy what was generated
+    signupPassInput.type = 'text';
+    togglePasswordBtn.textContent = 'Hide';
+    togglePasswordBtn.setAttribute('aria-label', 'Hide password');
+
+    pwStrengthEl.setAttribute('data-level', String(passwordStrengthLevel(generated)));
+    applyFieldResult(signupPassInput, signupPassError, checkSignupPassword(generated, signupEmailInput.value), signupPassMsgs);
+    applyFieldResult(signupConfirmInput, signupConfirmError, checkConfirm(generated, generated), signupConfirmMsgs);
+
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(generated).then(() => {
+        showBanner(signupStatus, 'Strong password generated and copied to your clipboard.', 'success');
+      }).catch(() => {
+        showBanner(signupStatus, 'Strong password generated. Copy it before you continue.', 'success');
+      });
+    } else {
+      showBanner(signupStatus, 'Strong password generated. Copy it before you continue.', 'success');
+    }
+  });
+
+  signupForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    signupStatus.classList.remove('show');
+
+    const nameResult = checkName(signupNameInput.value);
+    const emailResult = checkSignupEmail(signupEmailInput.value);
+    const passResult = checkSignupPassword(signupPassInput.value, signupEmailInput.value);
+    const confirmResult = checkConfirm(signupConfirmInput.value, signupPassInput.value);
+    const mobileResult = checkMobile(signupMobileInput.value);
+    const cityResult = checkCity(signupCityInput.value);
+    const countryResult = checkCountry(signupCountryInput.value);
+    const bioResult = checkBio(signupBioInput.value);
+
+    const nameValid = applyFieldResult(signupNameInput, signupNameError, nameResult, signupNameMsgs);
+    const emailValid = applyFieldResult(signupEmailInput, signupEmailError, emailResult, signupEmailMsgs);
+    const passValid = applyFieldResult(signupPassInput, signupPassError, passResult, signupPassMsgs);
+    const confirmValid = applyFieldResult(signupConfirmInput, signupConfirmError, confirmResult, signupConfirmMsgs);
+    const mobileValid = applyFieldResult(signupMobileInput, signupMobileError, mobileResult, signupMobileMsgs);
+    const cityValid = applyFieldResult(signupCityInput, signupCityError, cityResult, signupCityMsgs);
+    const countryValid = applyFieldResult(signupCountryInput, signupCountryError, countryResult, signupCountryMsgs);
+    const bioValid = applyFieldResult(signupBioInput, signupBioError, bioResult, signupBioMsgs);
+
+    const allValid = nameValid && emailValid && passValid && confirmValid
+      && mobileValid && cityValid && countryValid && bioValid;
+
+    if(allValid){
+      showBanner(signupStatus, 'Account created — welcome to Waypoint.', 'success');
+    } else {
+      showBanner(signupStatus, 'Please fix the highlighted fields.', 'error');
+      const firstInvalid = [
+        [nameValid, signupNameInput], [emailValid, signupEmailInput],
+        [passValid, signupPassInput], [confirmValid, signupConfirmInput],
+        [mobileValid, signupMobileInput], [cityValid, signupCityInput],
+        [countryValid, signupCountryInput], [bioValid, signupBioInput]
+      ].find(([valid]) => !valid);
+      if(firstInvalid) firstInvalid[1].focus();
+    }
+  });
+
+  // ---- FORGOT PASSWORD ----
+  const forgotForm = document.getElementById('forgotForm');
+  const forgotEmailInput = document.getElementById('forgotEmail');
+  const forgotEmailError = document.getElementById('forgotEmailError');
+  const forgotStatus = document.getElementById('forgotStatus');
+  const forgotEmailMsgs = { empty: 'Email is required.', invalid: 'Enter a valid email address.' };
+
+  forgotEmailInput.addEventListener('blur', () => {
+    applyFieldResult(forgotEmailInput, forgotEmailError, checkEmail(forgotEmailInput.value), forgotEmailMsgs);
+  });
+
+  forgotForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    forgotStatus.classList.remove('show');
+
+    const result = checkEmail(forgotEmailInput.value);
+    const valid = applyFieldResult(forgotEmailInput, forgotEmailError, result, forgotEmailMsgs);
+
+    if(valid){
+      showBanner(forgotStatus, 'If that email exists, a reset link is on its way.', 'success');
+    } else {
+      showBanner(forgotStatus, result === 'empty' ? 'Enter your email address.' : 'Enter a valid email address first.', 'error');
+      forgotEmailInput.focus();
+    }
+  });
+
+  // live-clear invalid state as user types/selects, so errors don't linger after a correction
+  document.querySelectorAll('input, select, textarea').forEach(inp => {
+    const clear = () => {
+      inp.classList.remove('invalid');
+      inp.removeAttribute('aria-invalid');
+      const err = document.getElementById(inp.id + 'Error');
+      if(err) err.classList.remove('show');
+    };
+    inp.addEventListener('input', clear);
+    if(inp.tagName === 'SELECT') inp.addEventListener('change', clear);
+  });
+
+  // reset a form's field/error state whenever the user switches views,
+  // so leftover red borders from one view don't bleed into another
+  function resetFormState(form){
+    form.querySelectorAll('input, select, textarea').forEach(inp => {
+      inp.classList.remove('invalid');
+      inp.removeAttribute('aria-invalid');
+    });
+    form.querySelectorAll('.field-error').forEach(err => err.classList.remove('show'));
+    const banner = form.querySelector('.status-banner');
+    if(banner) banner.classList.remove('show');
+  }
+  [tabLogin, tabSignup, document.getElementById('goSignup'), document.getElementById('goLogin'),
+   document.getElementById('forgotTrigger'), document.getElementById('backToLogin')].forEach(btn => {
+    btn.addEventListener('click', () => {
+      resetFormState(loginForm);
+      resetFormState(signupForm);
+      resetFormState(forgotForm);
+    });
+  });
+</script>
+
+</body>
+</html>
